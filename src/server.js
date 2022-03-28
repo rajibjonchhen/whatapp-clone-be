@@ -10,15 +10,16 @@ const { PORT = 3001 } = process.env
 const server = express()
 
 /********************** Middleware  ************************/
-// const whiteList = [process.env.PROD_URL,process.env.DEV_URL]
+const whiteListOrigins = [process.env.PROD_URL, process.env.DEV_URL, process.env.SWAGGER_URL ]
 
-// server.use(cors({origin:function(origin, next){
-//     if(!origin || whiteListOrigins.indexOf(origin)!== -1){
-//         next(null, true)
-//     } else{
-//         next(new Error("cors error"))
-//     }
-// }}))
+server.use(cors({origin:function(origin, next){
+    console.log(origin);
+    if(!origin || whiteListOrigins.indexOf(origin)!== -1){
+        next(null, true)
+    } else{
+        next(new Error("cors error"))
+    }
+}}))
 
 server.use(express.json())
 

@@ -21,15 +21,27 @@ usersRouter.get("/me", JWTAuthMiddleware,  async(req, res, next) => {
     }
 })
 
+// -----------------------------Get me access key------------------------
+usersRouter.put("/me", JWTAuthMiddleware,  async(req, res, next) => {
+    
 
+    try {
+        const user =  await UsersModel.findById(req.user._id)
+        res.send({user})
+        
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
 
 // ----------------------------- Get new access token from refresh token------------------------
 usersRouter.post("/refreshTokens",  async(req, res, next) => {
     
     try {
-        const {currentResreshToken} = req.body
+        const {currentRefreshToken} = req.body
         
-        const {accessToken, refreshToken} = await verifyRefreshTokenAndGenerateNewTokens(currentResreshToken)
+        const {accessToken, refreshToken} = await verifyRefreshTokenAndGenerateNewTokens(currentRefreshToken)
         console.log("getting /me")
         
         res.send({accessToken, refreshToken})
