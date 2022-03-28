@@ -1,5 +1,7 @@
 import express, { Router } from "express"
 import createError from "http-errors"
+import { JWTAuthMiddleware } from "../auth-middleware/JWTAuthMiddleware.js"
+import { authenticateUser } from "../auth-middleware/tools.js"
 import UsersModel from "./users-schema.js"
 
 const usersRouter = Router()
@@ -13,6 +15,7 @@ usersRouter.post("/account", async (req, res, next) => {
   try {
     const newUser = new UsersModel(req.body)
     const createdUser = await newUser.save()
+    const token =  await authenticateUser(newUser)
     res.status(201).send(createdUser)
     // res.status(201).send({ message: "USER CREATED(REGISTERED)", ID: _id })
   } catch (error) {
@@ -23,6 +26,11 @@ usersRouter.post("/account", async (req, res, next) => {
 usersRouter.post("/session", async (req, res, next) => {
   try {
     const { email, password } = req.body
+    const user = await UsersModel.checkCredentials(email, password)
+    if(user){
+        const { accessToken, refreshToken } =  await authenticateUser(user)
+        res.send({accessToken, refreshToken})
+    }
   } catch (error) {
     next(error)
   }
@@ -87,8 +95,8 @@ usersRouter.delete("/", async (req, res, next) => {
 
 
 // -----------------------------Get me ROUTE------------------------
-usersRouter.get("/me",  async(req, res, next) => {
-
+usersRouter.get("/me",JWTAuthMiddleware,  async(req, res, next) => {
+console.log("getting /me")
 })
 
 export default usersRouter

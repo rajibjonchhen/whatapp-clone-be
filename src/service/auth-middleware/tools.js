@@ -18,7 +18,7 @@ export const generateJWTToken = payload =>
         })
     )
 
-export const verifyJWT = token =>
+export const verifyJWTToken = token =>
     new Promise ((resolve, reject) =>
         jwt.verify(
             token,
