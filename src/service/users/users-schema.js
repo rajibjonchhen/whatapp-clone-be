@@ -41,7 +41,7 @@ UsersSchema.statics.checkCredentials = async function(email, plainPW) {
     const user = await this.findOne({email})
     if(user) {
         const isMatch  = bcrypt.compare(plainPW, user.password)
-    
+        
         const result = isMatch? user : null
 
         return result

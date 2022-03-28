@@ -12,7 +12,7 @@ export const authenticateUser = async user => {
 
 export const generateJWTToken = payload => 
     new Promise ((resolve, reject) => 
-        jwt.sign(payload, process.env.JWT_SECRET, {expiresIn : "1 week"}, (err, token) => {
+        jwt.sign(payload, process.env.JWT_SECRET, {expiresIn : "15m"}, (err, token) => {
             if(err) reject(err)
             else resolve(token)
         })
@@ -30,14 +30,14 @@ export const verifyJWTToken = token =>
         )
     )    
 
-    const generateRefreshToken = payload => 
+    export const generateRefreshToken = payload => 
     new Promise ((resolve, reject) => 
         jwt.sign(payload, process.env.REFRESH_SECRET, {expiresIn : "1 week"}, (err, token) => {
             if(err) reject(err)
             else resolve(token)
         })
     )
-    const verifyRefreshToken = token => 
+    export const verifyRefreshToken = token => 
             new Promise((resolve, reject ) =>
             jwt.verify(token, process.env.REFRESH_SECRET,(err, payload) => {
                 if (err) reject(err)
@@ -45,7 +45,7 @@ export const verifyJWTToken = token =>
             })
             )
 
-    const verifyRefreshTokenAndgenerateNewsToken = async currentRefreshToken =>{
+    export const verifyRefreshTokenAndGenerateNewTokens = async currentRefreshToken =>{
         try {
             const payload = await verifyRefreshToken(currentRefreshToken)
             const user = await  UsersModel.findById(payload._id)

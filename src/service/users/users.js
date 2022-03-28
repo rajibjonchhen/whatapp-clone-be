@@ -1,7 +1,7 @@
 import express, { Router } from "express"
 import createError from "http-errors"
 import { JWTAuthMiddleware } from "../auth-middleware/JWTAuthMiddleware.js"
-import { authenticateUser } from "../auth-middleware/tools.js"
+import { authenticateUser, verifyRefreshTokenAndGenerateNewTokens } from "../auth-middleware/tools.js"
 import UsersModel from "./users-schema.js"
 
 const usersRouter = Router()
@@ -93,10 +93,31 @@ usersRouter.delete("/", async (req, res, next) => {
   }
 })
 
-
-// -----------------------------Get me ROUTE------------------------
+// -----------------------------Get me access key------------------------
 usersRouter.get("/me",JWTAuthMiddleware,  async(req, res, next) => {
-console.log("getting /me")
+    
+    try {
+        console.log("getting /me")
+        
+    } catch (error) {
+        
+    }
+})
+
+// ----------------------------- Get new access token from refresh token------------------------
+usersRouter.post("/refreshTokens",  async(req, res, next) => {
+    
+    try {
+        const {currentResreshToken} = req.body
+        
+        const {accessToken, refreshToken} = await verifyRefreshTokenAndGenerateNewTokens(currentResreshToken)
+        console.log("getting /me")
+        
+        res.send({accessToken, refreshToken})
+        
+    } catch (error) {
+        console.log(error)
+    }
 })
 
 export default usersRouter
