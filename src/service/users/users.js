@@ -8,11 +8,49 @@ const usersRouter = Router()
 
 
 // -----------------------------Get me access key------------------------
+usersRouter.get("/", JWTAuthMiddleware,  async(req, res, next) => {
+    
+    try {
+        const user =  await UsersModel.findById(req.user._id)
+        if(user){
+            if(req.query.q){
+                console.log(req.query.q)
+                const filteredUsers = await UsersModel.find({$contains:{username:req.query.q}})
+                filteredUsers.length> 0? res.send({users : filteredUsers}) : ({users : []})
+            } else{
+                const allUsers = await UsersModel.find()
+                res.send({users : allUsers})
+            }
+        }
+        
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
+
+// -----------------------------Get me access key------------------------
 usersRouter.get("/me", JWTAuthMiddleware,  async(req, res, next) => {
+    
+    try {
+        const user =  await UsersModel.findById(req.user._id)
+        res.send({user})
+        
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
+
+
+// -----------------------------Get me access key------------------------
+usersRouter.put("/me", JWTAuthMiddleware,  async(req, res, next) => {
     
 
     try {
-        const user =  await UsersModel.findById(req.user._id)
+        const user =  await UsersModel.findByIdAndUpdate(req.user._id, req.body, {new:true})
         res.send({user})
         
     } catch (error) {
@@ -26,8 +64,8 @@ usersRouter.put("/me", JWTAuthMiddleware,  async(req, res, next) => {
     
 
     try {
-        const user =  await UsersModel.findById(req.user._id)
-        res.send({user})
+        const user =  await UsersModel.findByIdAndDelete(req.user._id)
+        res.status(201).send()
         
     } catch (error) {
         console.log(error)
@@ -81,27 +119,27 @@ usersRouter.post("/session", async (req, res, next) => {
 
 // -----------------------------GET ROUTE------------------------
 
-usersRouter.get("/", async (req, res, next) => {
-  try {
-    const Users = await UsersModel.find()
-    console.log("listof users", Users)
-    console.log("QUERY PARAMETERS: ", req.query)
+// usersRouter.get("/", async (req, res, next) => {
+//   try {
+//     const Users = await UsersModel.find()
+//     console.log("listof users", Users)
+//     console.log("QUERY PARAMETERS: ", req.query)
 
-    if (req.query && req.query.username) {
-      // for serching user by username , ?username=rajib
-      const filterdUserName = Users.filter((user) => user.username === req.query.username)
-      res.send(filterdUserName)
-    } else if (req.query && req.query.email) {
-      // for searching user by email , ?email=rajib@gmail.com
-      const filterdUserEmail = Users.filter((user) => user.email === req.query.email)
-      res.send(filterdUserEmail)
-    } else {
-      res.send(Users)
-    }
-  } catch (error) {
-    next(error)
-  }
-})
+//     if (req.query && req.query.username) {
+//       // for serching user by username , ?username=rajib
+//       const filterdUserName = Users.filter((user) => user.username === req.query.username)
+//       res.send(filterdUserName)
+//     } else if (req.query && req.query.email) {
+//       // for searching user by email , ?email=rajib@gmail.com
+//       const filterdUserEmail = Users.filter((user) => user.email === req.query.email)
+//       res.send(filterdUserEmail)
+//     } else {
+//       res.send(Users)
+//     }
+//   } catch (error) {
+//     next(error)
+//   }
+// })
 
 // -----------------------------GET WITH ID ROUTE------------------------
 

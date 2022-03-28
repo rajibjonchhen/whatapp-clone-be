@@ -5,8 +5,8 @@ const { Schema, model } = mongoose
 
 const UsersSchema = new Schema(
   {
-    username: { type: String, required: true, unique:true },
-    email: { type: String, required: true, unique:true },
+    username: { type: String, required: true, unique:[true, "username must be unique" ]},
+    email: { type: String, required: true, unique:[true, "email must be unique"] },
     avatar: { type: String, required: true, default: "https://ui-avatars.com/api/?name=John+Doe" },
     password: { type: String },
     refreshToken :{ type : String}
@@ -33,6 +33,7 @@ UsersSchema.methods.toJSON = function() {
     const userDocument = this
     const userObject = userDocument.toObject()
     delete userObject.password
+    delete userObject.refreshToken
     return userObject
 }
 
