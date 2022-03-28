@@ -1,8 +1,10 @@
 import express, { Router } from "express"
-import createError from "http-errors"
+import { validationResult } from "express-validator"
+import createHttpError from "http-errors"
 import passport from "passport"
 import { JWTAuthMiddleware } from "../auth-middleware/JWTAuthMiddleware.js"
 import { authenticateUser, verifyRefreshTokenAndGenerateNewTokens } from "../auth-middleware/tools.js"
+import { checkUserSchema, checkValidationResult } from "../errors/validator.js"
 import UsersModel from "./users-schema.js"
 
 const usersRouter = Router()
@@ -90,22 +92,29 @@ usersRouter.post("/refreshTokens",  async(req, res, next) => {
     }
 })
 
+
 // ----------------------------- POST ROUTE------------------------
 
 // ==> for user registration
-usersRouter.post("/account", async (req, res, next) => {
+usersRouter.post("/account", checkUserSchema, checkValidationResult, async (req, res, next) => {
     try {
+        const errorsList = validationResult(req)
+        console.log("errorsList ---=" ,{errorsList})
+    if(errorsList.isEmpty()){ 
     const newUser = new UsersModel(req.body)
     const createdUser = await newUser.save()
     const {accessToken, refreshToken} =  await authenticateUser(newUser)
     res.status(201).send({createdUser,accessToken, refreshToken})
     // res.status(201).send({ message: "USER CREATED(REGISTERED)", ID: _id })
+    }else{
+        next(createHttpError(400, errorsList))
+        }
     } catch (error) {
     next(error)
     }
 })
 // ==> for user login
-usersRouter.post("/session", async (req, res, next) => {
+usersRouter.post("/session",  async (req, res, next) => {
   try {
     const { email, password } = req.body
     const user = await UsersModel.checkCredentials(email, password)

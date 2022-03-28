@@ -1,4 +1,5 @@
 import express, {Router} from 'express'
+import createHttpError from 'http-errors'
 import { JWTAuthMiddleware } from '../auth-middleware/JWTAuthMiddleware.js'
 
 const chatsRouter = Router()
@@ -35,6 +36,25 @@ chatsRouter.get("/:id", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
         const reqMsg = await new ChatsModel.find({_id: req.params.id})
+
+        res.send({messages:reqMsg})
+    } catch (error) {
+        next(error)
+    }
+})
+
+// ----------------------------- GET ALL MESSAGES ROUTE------------------------
+
+chatsRouter.delete("/:id", JWTAuthMiddleware, async(req, res, next) =>{
+    try {
+
+    const reqMsg = await new ChatsModel.findOne({_id: req.params.id})
+        if(reqMsg){
+
+            const reqMsg = await new ChatsModel.findOne({sender: req.user._id})
+        } else {
+            next(createHttpError())
+        }
 
         res.send({messages:reqMsg})
     } catch (error) {
