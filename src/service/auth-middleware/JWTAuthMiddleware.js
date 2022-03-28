@@ -15,7 +15,7 @@ export const JWTAuthMiddleware = async(req, res, next) => {
             }
             next()
         } catch (error) {
-            throw new createError(401, "Refresh token not valid!")
+            throw new createError(401, "Token not valid!")
         }
     }
 }

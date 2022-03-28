@@ -2,7 +2,7 @@ import mongoose from "mongoose"
 
 const {Schema, model } = mongoose
 
-const chatSchema = new Schema(
+const ChatsSchema = new Schema(
     {
     sender: {type : String, required: true},
     content: {
@@ -10,3 +10,5 @@ const chatSchema = new Schema(
         media: {type : String}
     }
 })
+
+export default model("Chats", ChatsSchema)
