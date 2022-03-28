@@ -20,6 +20,7 @@ export const basicAuthMW = async (req, res, next) => {
             }
         } catch (error) {
             console.log(error)
+            next(createError(401, "Token not valid!"))
         }
     }
 }
