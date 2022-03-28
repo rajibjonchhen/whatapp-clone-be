@@ -7,20 +7,51 @@ import UsersModel from "./users-schema.js"
 const usersRouter = Router()
 
 
+// -----------------------------Get me access key------------------------
+usersRouter.get("/me", JWTAuthMiddleware,  async(req, res, next) => {
+    
+
+    try {
+        const user =  await UsersModel.findById(req.user._id)
+        res.send({user})
+        
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
+
+
+// ----------------------------- Get new access token from refresh token------------------------
+usersRouter.post("/refreshTokens",  async(req, res, next) => {
+    
+    try {
+        const {currentResreshToken} = req.body
+        
+        const {accessToken, refreshToken} = await verifyRefreshTokenAndGenerateNewTokens(currentResreshToken)
+        console.log("getting /me")
+        
+        res.send({accessToken, refreshToken})
+        
+    } catch (error) {
+        console.log(error)
+    }
+})
 
 // -----------------------------POST ROUTE------------------------
 
 // ==> for user registration
 usersRouter.post("/account", async (req, res, next) => {
-  try {
+    try {
     const newUser = new UsersModel(req.body)
     const createdUser = await newUser.save()
     const token =  await authenticateUser(newUser)
     res.status(201).send(createdUser)
     // res.status(201).send({ message: "USER CREATED(REGISTERED)", ID: _id })
-  } catch (error) {
+    } catch (error) {
     next(error)
-  }
+    }
 })
 // ==> for user login
 usersRouter.post("/session", async (req, res, next) => {
@@ -93,31 +124,7 @@ usersRouter.delete("/", async (req, res, next) => {
   }
 })
 
-// -----------------------------Get me access key------------------------
-usersRouter.get("/me",JWTAuthMiddleware,  async(req, res, next) => {
-    
-    try {
-        console.log("getting /me")
-        
-    } catch (error) {
-        
-    }
-})
 
-// ----------------------------- Get new access token from refresh token------------------------
-usersRouter.post("/refreshTokens",  async(req, res, next) => {
-    
-    try {
-        const {currentResreshToken} = req.body
-        
-        const {accessToken, refreshToken} = await verifyRefreshTokenAndGenerateNewTokens(currentResreshToken)
-        console.log("getting /me")
-        
-        res.send({accessToken, refreshToken})
-        
-    } catch (error) {
-        console.log(error)
-    }
-})
+
 
 export default usersRouter
