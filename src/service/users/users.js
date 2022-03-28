@@ -4,7 +4,7 @@ const usersRouter = Router()
 
 // -----------------------------POST ROUTE------------------------
 
-usersRouter.post("/", async, (req, res, next) => {
+usersRouter.post("/", async(req, res, next) => {
   try {
   } catch (error) {
     next(error)
@@ -13,7 +13,7 @@ usersRouter.post("/", async, (req, res, next) => {
 
 // -----------------------------GET ROUTE------------------------
 
-usersRouter.get("/", async, (req, res, next) => {
+usersRouter.get("/", async(req, res, next) => {
   try {
   } catch (error) {
     next(error)
@@ -22,7 +22,7 @@ usersRouter.get("/", async, (req, res, next) => {
 
 // -----------------------------GET WITH ID ROUTE------------------------
 
-usersRouter.get("/", async, (req, res, next) => {
+usersRouter.get("/", async(req, res, next) => {
   try {
   } catch (error) {
     next(error)
@@ -31,7 +31,7 @@ usersRouter.get("/", async, (req, res, next) => {
 
 // -----------------------------PUT ROUTE------------------------
 
-usersRouter.put("/", async, (req, res, next) => {
+usersRouter.put("/", async(req, res, next) => {
   try {
   } catch (error) {
     next(error)
@@ -40,7 +40,7 @@ usersRouter.put("/", async, (req, res, next) => {
 
 // -----------------------------DELETE ROUTE------------------------
 
-usersRouter.delete("/", async, (req, res, next) => {
+usersRouter.delete("/", async(req, res, next) => {
   try {
   } catch (error) {
     next(error)
