@@ -28,4 +28,17 @@ chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
         next(error)
     }
 })
+
+// ----------------------------- GET ALL MESSAGES ROUTE------------------------
+
+chatsRouter.get("/:id", JWTAuthMiddleware, async(req, res, next) =>{
+
+    try {
+        const reqMsg = await new ChatsModel.find({_id: req.params.id})
+
+        res.send({messages:reqMsg})
+    } catch (error) {
+        next(error)
+    }
+})
 export default chatsRouter
