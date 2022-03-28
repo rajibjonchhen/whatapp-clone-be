@@ -8,6 +8,7 @@ const UsersSchema = new Schema(
     email: { type: String, required: true },
     avatar: { type: String, required: true, default: "https://ui-avatars.com/api/?name=John+Doe" },
     password: { type: String },
+    refreshToken :{ type : String}
   },
 
   {

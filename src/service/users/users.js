@@ -4,6 +4,8 @@ import UsersModel from "./users-schema.js"
 
 const usersRouter = Router()
 
+
+
 // -----------------------------POST ROUTE------------------------
 
 // ==> for user registration
@@ -81,6 +83,12 @@ usersRouter.delete("/", async (req, res, next) => {
   } catch (error) {
     next(error)
   }
+})
+
+
+// -----------------------------Get me ROUTE------------------------
+usersRouter.get("/me",  async(req, res, next) => {
+
 })
 
 export default usersRouter
