@@ -1,4 +1,5 @@
 import express, { Router } from "express"
+import createError from "http-errors"
 import UsersModel from "./users-schema.js"
 
 const usersRouter = Router()
@@ -24,7 +25,6 @@ usersRouter.post("/session", async (req, res, next) => {
     next(error)
   }
 })
-// =
 
 // -----------------------------GET ROUTE------------------------
 
@@ -52,8 +52,14 @@ usersRouter.get("/", async (req, res, next) => {
 
 // -----------------------------GET WITH ID ROUTE------------------------
 
-usersRouter.get("/", async (req, res, next) => {
+usersRouter.get("/:userId", async (req, res, next) => {
   try {
+    const User = await UsersModel.findById(req.params.userId)
+    if (User) {
+      res.send(User)
+    } else {
+      next(createHttpError(404, `User with id${req.params.userId} Not found!`))
+    }
   } catch (error) {
     next(error)
   }
