@@ -38,7 +38,6 @@ server.use(notFoundHandler)
 server.use(genericErrorHandler)
 
 /********************** Connections  ************************/
-
 mongoose.connect(process.env.MONGO_CONNECTION)
 mongoose.connection.on("connected", () => {
     console.log("successfully connected to  mongo!")
