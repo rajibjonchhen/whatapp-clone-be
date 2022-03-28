@@ -19,17 +19,18 @@ async(accessToken, refreshToken, profile, passportNext) => {
         } else{
             
             const newUser = new UsersModel({
-                name : profile.name.given_name,
+               
+                name : profile.name.givenName,
                 surname : profile.name.familyName || "not set",
                 email : profile.emails[0].value,
-                name : profile.name.givenName,
                 avatar : profile.photos[0].value,
+                username : profile.emails[0].value.split("@")[0],
                 googleId : profile.id
             })
             const savedUser = await newUser.save()
-            const token = await authenticateUser(savedUser)
+            const {accessToken, refreshToken} = await authenticateUser(savedUser)
             console.log("new user saved and token is", token)
-            passportNext(null,{token})
+            passportNext(null,{accessToken, refreshToken})
         }
     } catch (error) {
         console.log(error)

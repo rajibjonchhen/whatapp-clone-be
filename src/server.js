@@ -5,11 +5,16 @@ import cors from "cors"
 import usersRouter from "./service/users/users.js"
 import chatsRouter from "./service/chats/chats.js"
 import { badRequestHandler, genericErrorHandler, notFoundHandler, unauthorizedHandler } from "./service/errors/errorHandlers.js"
+import passport from "passport"
+import googleStrategy from "./service/auth-middleware/Oauth.js"
+
 const { PORT = 3001 } = process.env
 
 const server = express()
 
 /********************** Middleware  ************************/
+passport.use("google", googleStrategy)
+
 const whiteListOrigins = [process.env.PROD_URL, process.env.DEV_URL, process.env.SWAGGER_URL ]
 
 server.use(cors({origin:function(origin, next){
@@ -22,6 +27,8 @@ server.use(cors({origin:function(origin, next){
 }}))
 
 server.use(express.json())
+server.use(passport.initialize())
+
 
 /********************** Routes  ************************/
 server.use("/users", usersRouter)

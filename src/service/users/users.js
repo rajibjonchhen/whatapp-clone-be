@@ -1,5 +1,6 @@
 import express, { Router } from "express"
 import createError from "http-errors"
+import passport from "passport"
 import { JWTAuthMiddleware } from "../auth-middleware/JWTAuthMiddleware.js"
 import { authenticateUser, verifyRefreshTokenAndGenerateNewTokens } from "../auth-middleware/tools.js"
 import UsersModel from "./users-schema.js"
@@ -9,7 +10,7 @@ const usersRouter = Router()
 
 // -----------------------------Get me access key------------------------
 usersRouter.get("/", JWTAuthMiddleware,  async(req, res, next) => {
-    
+    console.log(req.user)
     try {
         const user =  await UsersModel.findById(req.user._id)
         if(user){
@@ -30,7 +31,7 @@ usersRouter.get("/", JWTAuthMiddleware,  async(req, res, next) => {
 })
 
 
-// -----------------------------Get me access key------------------------
+// ----------------------------- Get me access key------------------------
 usersRouter.get("/me", JWTAuthMiddleware,  async(req, res, next) => {
     
     try {
@@ -45,7 +46,7 @@ usersRouter.get("/me", JWTAuthMiddleware,  async(req, res, next) => {
 
 
 
-// -----------------------------Get me access key------------------------
+// ----------------------------- PUT me access key------------------------
 usersRouter.put("/me", JWTAuthMiddleware,  async(req, res, next) => {
     
 
@@ -59,8 +60,8 @@ usersRouter.put("/me", JWTAuthMiddleware,  async(req, res, next) => {
     }
 })
 
-// -----------------------------Get me access key------------------------
-usersRouter.put("/me", JWTAuthMiddleware,  async(req, res, next) => {
+// ----------------------------- Delete me access key------------------------
+usersRouter.delete("/me", JWTAuthMiddleware,  async(req, res, next) => {
     
 
     try {
@@ -89,15 +90,15 @@ usersRouter.post("/refreshTokens",  async(req, res, next) => {
     }
 })
 
-// -----------------------------POST ROUTE------------------------
+// ----------------------------- POST ROUTE------------------------
 
 // ==> for user registration
 usersRouter.post("/account", async (req, res, next) => {
     try {
     const newUser = new UsersModel(req.body)
     const createdUser = await newUser.save()
-    const token =  await authenticateUser(newUser)
-    res.status(201).send(createdUser)
+    const {accessToken, refreshToken} =  await authenticateUser(newUser)
+    res.status(201).send({createdUser,accessToken, refreshToken})
     // res.status(201).send({ message: "USER CREATED(REGISTERED)", ID: _id })
     } catch (error) {
     next(error)
@@ -117,8 +118,37 @@ usersRouter.post("/session", async (req, res, next) => {
   }
 })
 
-// -----------------------------GET ROUTE------------------------
+// ----------------------------- PUT image me access key------------------------
+usersRouter.post("/me/avatar", JWTAuthMiddleware,   async(req, res, next) => {
+    
 
+    try {
+        const user =  await UsersModel.findByIdAndUpdate(req.user._id, {avatar:req.file.path}, {new:true})
+        res.send({user})
+        
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+// -----------------------------Google Authentication ROUTE------------------------
+usersRouter.get("/googleLogin", passport.authenticate("google",{scope : ["email","profile"]}) )
+// http://localhost:3001/users/googleLogin
+
+// -----------------------------GET ROUTE------------------------
+usersRouter.get("/googleRedirect", passport.authenticate("google"), (req, res, next) => {
+    try {
+        console.log("I am back from google")
+        const token = req.user.token
+        console.log("I have token ---" , token)
+        res.redirect(`${process.env.FE_URL}/home?token=${token}`)
+    } catch (error) {
+        next(error)
+    }
+})
+
+
+// -----------------------------GET ROUTE------------------------
 // usersRouter.get("/", async (req, res, next) => {
 //   try {
 //     const Users = await UsersModel.find()

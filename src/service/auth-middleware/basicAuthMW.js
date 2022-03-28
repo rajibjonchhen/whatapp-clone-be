@@ -7,7 +7,7 @@ export const basicAuthMW = async (req, res, next) => {
         next(createError(401, "Please provide credentials in Authorization header"))
     } else {
         try {
-            const base64Credentials = rqq.headers.authorization.split(" ")[1]
+            const base64Credentials = req.headers.authorization.split(" ")[1]
             console.log(base64Credentials)
             const [email, password] = atob(base64Credentials).split(":")
             console.log("EMAITL", email, "PASSWORD", password);
