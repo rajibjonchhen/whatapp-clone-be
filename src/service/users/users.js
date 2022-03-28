@@ -19,8 +19,19 @@ usersRouter.post("/registration", async (req, res, next) => {
 
 usersRouter.get("/", async (req, res, next) => {
   try {
-    const User = await UsersModel.find()
-    res.send(User)
+    const Users = await UsersModel.find()
+    console.log("listof users", Users)
+    console.log("QUERY PARAMETERS: ", req.query)
+
+    if (req.query && req.query.username) {
+      const filterdUserName = Users.filter((user) => user.username === req.query.username)
+      res.send(filterdUserName)
+    } else if (req.query && req.query.email) {
+      const filterdUserEmail = Users.filter((user) => user.email === req.query.email)
+      res.send(filterdUserEmail)
+    } else {
+      res.send(Users)
+    }
   } catch (error) {
     next(error)
   }
