@@ -5,15 +5,26 @@ const usersRouter = Router()
 
 // -----------------------------POST ROUTE------------------------
 
-usersRouter.post("/registration", async (req, res, next) => {
+// ==> for user registration
+usersRouter.post("/account", async (req, res, next) => {
   try {
     const newUser = new UsersModel(req.body)
-    const { _id } = await newUser.save()
-    res.status(201).send({ message: "USER CREATED(REGISTERED)", ID: _id })
+    const createdUser = await newUser.save()
+    res.status(201).send(createdUser)
+    // res.status(201).send({ message: "USER CREATED(REGISTERED)", ID: _id })
   } catch (error) {
     next(error)
   }
 })
+// ==> for user login
+usersRouter.post("/session", async (req, res, next) => {
+  try {
+    const { email, password } = req.body
+  } catch (error) {
+    next(error)
+  }
+})
+// =
 
 // -----------------------------GET ROUTE------------------------
 
@@ -24,9 +35,11 @@ usersRouter.get("/", async (req, res, next) => {
     console.log("QUERY PARAMETERS: ", req.query)
 
     if (req.query && req.query.username) {
+      // for serching user by username , ?username=rajib
       const filterdUserName = Users.filter((user) => user.username === req.query.username)
       res.send(filterdUserName)
     } else if (req.query && req.query.email) {
+      // for searching user by email , ?email=rajib@gmail.com
       const filterdUserEmail = Users.filter((user) => user.email === req.query.email)
       res.send(filterdUserEmail)
     } else {
