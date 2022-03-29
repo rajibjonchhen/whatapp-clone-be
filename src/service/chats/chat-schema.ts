@@ -5,36 +5,29 @@ const {Schema, model } = mongoose
 
 
 
-// interface Chat {
-// 	members: User[]
-// 	messages: Message[]
-// }
+interface Chat {
+	members: User[]
+	messages: Message[]
+}
 
-// interface Message {
-// 	sender: User
-// 	content: {
-// 		text?: string
-// 		media?: string
-// 	}
-// 	timestamp: number
-// }
+interface Message {
+	sender: User
+	content: {
+		text?: string
+		media?: string
+	}
+	timestamp: number
+}
 
-//interface User {
-// 	name: string
-// 	email: string
-// 	avatar?: string
-// }
+interface User {
+	name: string
+	email: string
+	avatar?: string
+}
 
-// const MessagesSchema = new Schema(
-//     {
-//     sender: {type : String, required: true},
-//     content: {
-//         text: {type : String},
-//         media: {type : String}
-//     }
-// })
 
-const ChatsSchema = new Schema({
+
+const ChatsSchema = new Schema<Chat>({
     members : [{ type: Schema.Types.ObjectId, ref: "User", required: true}],
     messages:[{
         sender: { type: Schema.Types.ObjectId, ref: "User", required: true},

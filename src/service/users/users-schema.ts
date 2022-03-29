@@ -1,17 +1,18 @@
-import mongoose from "mongoose"
+import mongoose, { Model }  from "mongoose"
 import bcrypt from "bcrypt"
+import { IUser } from "../types/types"
 
 const { Schema, model } = mongoose
+export interface IUserDocument extends IUser, Document {}
 
-//interface User {
-// 	name: string
-// 	email: string
-// 	avatar?: string
-// }
+export interface IUserModel extends Model<IUser> {
+  checkCredentials: (email: string, plainPw: string) => Promise<IUser | null>;
+}
+
 const UsersSchema = new Schema(
   {
-    username: { type: String, required: true, unique:[true, "username must be unique" ]},
-    email: { type: String, required: true, unique:[true, "email must be unique"] },
+    username: { type: String, required: true, unique:true},
+    email: { type: String, required: true, unique:true},
     avatar: { type: String, required: true, default: "https://ui-avatars.com/api/?name=John+Doe" },
     password: { type: String },
     refreshToken :{ type : String}
@@ -46,7 +47,7 @@ UsersSchema.statics.checkCredentials = async function(email, plainPW) {
 
     const user = await this.findOne({email})
     if(user) {
-        const isMatch  = bcrypt.compare(plainPW, user.password)
+        const isMatch  = await bcrypt.compare(plainPW, user.password)
         
         const result = isMatch? user : null
 

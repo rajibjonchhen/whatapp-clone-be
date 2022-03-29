@@ -1,7 +1,24 @@
 
 import { checkSchema, validationResult } from "express-validator";
+import { Request, Response, NextFunction } from "express";
+import createHttpError from "http-errors";
 
-const schema = {
+interface ValidatorInterface {
+username :{
+  in: string[],
+  isString:{
+    errorMessage:string
+  }
+},
+email :{
+  in: string[],
+  isString:{
+    errorMessage:string
+  }
+}
+}
+
+const schema : any = {
     username: {
       in: ["body"],
       isString: {
@@ -18,13 +35,12 @@ const schema = {
 
 export const checkUserSchema = checkSchema(schema)
 
-export const checkValidationResult = (req, res, next) => {
+export const checkValidationResult = (req:Request, res:Response, next:NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      const error = new Error("User validation is failed");
-      error.status = 400;
-      error.errors = errors.array();
-      next(error);
+      // const error = new Error("User validation is failed");
+    
+      next(createHttpError(400,errors));
     }
     next();
   };

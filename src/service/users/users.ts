@@ -9,20 +9,25 @@ import { JWTAuthMiddleware } from "../auth-middleware/JWTAuthMiddleware.js"
 import { authenticateUser, verifyRefreshTokenAndGenerateNewTokens } from "../auth-middleware/tools.js"
 import { checkUserSchema, checkValidationResult } from "../errors/validator.js"
 import UsersModel from "./users-schema.js"
+import { Request, Response, NextFunction } from "express";
+import { ILogin, IUser } from "../types/types.js";
+export interface IRequestWithUser extends Request {
+    user: ILogin
+  }
 
 const usersRouter = Router()
 
-const cloudinaryAvatarUploader = multer({
+/*const cloudinaryAvatarUploader = multer({
   storage: new CloudinaryStorage({
     cloudinary,
     params: {
       folder: "WhatsApp-Clone",
     },
   }),
-}).single("avatar")
+}).single("avatar")*/
 
 // -----------------------------Get me access key------------------------
-usersRouter.get("/", JWTAuthMiddleware, async (req, res, next) => {
+usersRouter.get("/", JWTAuthMiddleware, async (req:Request, res:Response, next:NextFunction) => {
   console.log(req.user)
   try {
     const user = await UsersModel.findById(req.user._id)

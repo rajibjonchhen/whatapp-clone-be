@@ -1,17 +1,16 @@
 import passport from 'passport'
-import GoogleStrategy from "passport-google-oauth20"
+import {Strategy} from "passport-google-oauth20"
 import UsersModel from "../users/users-schema.js"
 import { authenticateUser} from './tools.js';
 
-const googleStrategy = new GoogleStrategy({
-    clientID : process.env.GOOGLE_ID,
-    clientSecret : process.env.GOOGLE_SECRET,
+const googleStrategy = new Strategy({
+    clientID : process.env.GOOGLE_ID!,
+    clientSecret : process.env.GOOGLE_SECRET!,
     callbackURL:`${process.env.API_URL}/users/googleRedirect`
 },
-async(accessToken, refreshToken, profile, passportNext) => {
-    try {
+async(accessToken:string, refreshToken:string, profile:any, passportNext:any) => {
         const user = await UsersModel.findOne({email:profile.emails[0].value})
-        
+        try{
         if(user){
             const token = await authenticateUser(user)
             console.log("validated user and token is", token)
@@ -29,8 +28,8 @@ async(accessToken, refreshToken, profile, passportNext) => {
             })
             const savedUser = await newUser.save()
             const {accessToken, refreshToken} = await authenticateUser(savedUser)
-            console.log("new user saved and token is", token)
-            passportNext(null,{accessToken, refreshToken})
+            console.log("new user saved and token is", {accessToken, refreshToken})
+            passportNext(null,accessToken, refreshToken)
         }
     } catch (error) {
         console.log(error)

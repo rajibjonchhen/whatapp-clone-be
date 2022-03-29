@@ -1,8 +1,10 @@
 import atob from "atob"
 import createError from "http-errors"
 import UserModel from "../users/users-schema.js"
+import { Request, Response, NextFunction } from "express"
+import { IUserModel } from "../users/users-schema.js"
 
-export const basicAuthMW = async (req, res, next) => {
+export const basicAuthMW = async (req:Request, res:Response, next:NextFunction) => {
     if(!req.headers.authorization) {
         next(createError(401, "Please provide credentials in Authorization header"))
     } else {
