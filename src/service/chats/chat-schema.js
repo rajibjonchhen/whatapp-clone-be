@@ -19,21 +19,29 @@ const {Schema, model } = mongoose
 // 	timestamp: number
 // }
 
-const MessagesSchema = new Schema(
-    {
-    sender: {type : String, required: true},
-    content: {
-        text: {type : String},
-        media: {type : String}
-    }
-})
+//interface User {
+// 	name: string
+// 	email: string
+// 	avatar?: string
+// }
 
-const ChatSchema = new Schema({
-    member : [{
-    
-    }],
+// const MessagesSchema = new Schema(
+//     {
+//     sender: {type : String, required: true},
+//     content: {
+//         text: {type : String},
+//         media: {type : String}
+//     }
+// })
+
+const ChatsSchema = new Schema({
+    members : [{ type: Schema.Types.ObjectId, ref: "User", required: true}],
     messages:[{
-        type : MessagesSchema
+        sender: { type: Schema.Types.ObjectId, ref: "User", required: true},
+        content: {
+            text: {type : String},
+            media: {type : String}
+        }
     }],
 
 })

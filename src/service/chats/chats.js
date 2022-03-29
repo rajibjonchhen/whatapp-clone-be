@@ -9,7 +9,31 @@ const chatsRouter = Router()
 chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const newMessage = {...req.body}
+        const recipient = req.body.recipient
+        const sender = req.user._id
+        if(sender){
+            if(!recipient){
+                next(createHttpError(400, "Recipient id is missing"))
+            } 
+            let chat = await ChatsModel.findOne({
+                'members':{
+                    $all:[ sender, recipient]
+                }
+            }).select("-messages")
+            if(chat){
+                res.send(chat)
+            } else{
+                const newChat = new ChatsModel({members : [sender, recipient]})
+                const savedChat = await newChat.save()
+                if(savedChat){
+                    res.status(201).send(newChat)
+                }else{
+                    res.status(400).send({message: "Something went wrong"})
+                }
+            }
+        } else{
+            next(createHttpError(401, {message:"sender's id is missing"}))
+        }
         const msgSaved = await newMessage.save()
         res.send({message:msgSaved})
     } catch (error) {
@@ -22,8 +46,7 @@ chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
 chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const reqMsg = await new ChatsModel.find({sender: req.user._id})
-
+        const reqMsg = await new ChatsModel.find({members: req.user._id})
         res.send({messages:reqMsg})
     } catch (error) {
         next(error)
@@ -32,33 +55,37 @@ chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
 
 // ----------------------------- GET ALL MESSAGES ROUTE------------------------
 
-chatsRouter.get("/:id", JWTAuthMiddleware, async(req, res, next) =>{
+chatsRouter.get("/:chatId", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const reqMsg = await new ChatsModel.find({_id: req.params.id})
+        const reqMsg = await new ChatsModel.findOne({messages: [{_id:req.params.chatId, member: req.user._id}]})
 
-        res.send({messages:reqMsg})
-    } catch (error) {
-        next(error)
-    }
-})
-
-// ----------------------------- GET ALL MESSAGES ROUTE------------------------
-
-chatsRouter.delete("/:id", JWTAuthMiddleware, async(req, res, next) =>{
-    try {
-
-    const reqMsg = await new ChatsModel.findOne({_id: req.params.id})
         if(reqMsg){
-
-            const reqMsg = await new ChatsModel.findOne({sender: req.user._id})
-        } else {
-            next(createHttpError())
+            res.send({messages:reqMsg})
+        } else{
+            next(createHttpError(404,{message:`chat with ${req.params.chatId} not found`}))
         }
-
-        res.send({messages:reqMsg})
     } catch (error) {
         next(error)
     }
 })
+
+// ----------------------------- GET ALL MESSAGES ROUTE------------------------
+
+// chatsRouter.delete("/:id", JWTAuthMiddleware, async(req, res, next) =>{
+//     try {
+
+//     const reqMsg = await new ChatsModel.findOne({_id: req.params.id})
+//         if(reqMsg){
+
+//             const reqMsg = await new ChatsModel.findOne({sender: req.user._id})
+//         } else {
+//             next(createHttpError())
+//         }
+
+//         res.send({messages:reqMsg})
+//     } catch (error) {
+//         next(error)
+//     }
+// })
 export default chatsRouter
