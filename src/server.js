@@ -15,20 +15,23 @@ const server = express()
 /********************** Middleware  ************************/
 passport.use("google", googleStrategy)
 
-const whiteListOrigins = [process.env.PROD_URL, process.env.DEV_URL, process.env.SWAGGER_URL ]
+const whiteListOrigins = [process.env.PROD_URL, process.env.DEV_URL, process.env.SWAGGER_URL]
 
-server.use(cors({origin:function(origin, next){
-    console.log(origin);
-    if(!origin || whiteListOrigins.indexOf(origin)!== -1){
+server.use(
+  cors({
+    origin: function (origin, next) {
+      console.log(origin)
+      if (!origin || whiteListOrigins.indexOf(origin) !== -1) {
         next(null, true)
-    } else{
+      } else {
         next(new Error("cors error"))
-    }
-}}))
+      }
+    },
+  })
+)
 
 server.use(express.json())
 server.use(passport.initialize())
-
 
 /********************** Routes  ************************/
 server.use("/users", usersRouter)
