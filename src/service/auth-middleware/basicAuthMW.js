@@ -16,7 +16,7 @@ export const basicAuthMW = async (req, res, next) => {
                 req.user = user
                 next()
             }else {
-                next(createError(401, "Credentials are not right"))
+                next(createError(404, "Credentials are not right"))
             }
         } catch (error) {
             console.log(error)

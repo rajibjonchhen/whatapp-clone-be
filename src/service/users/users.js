@@ -9,7 +9,6 @@ import UsersModel from "./users-schema.js"
 
 const usersRouter = Router()
 
-
 // -----------------------------Get me access key------------------------
 usersRouter.get("/", JWTAuthMiddleware,  async(req, res, next) => {
     console.log(req.user)
@@ -25,7 +24,6 @@ usersRouter.get("/", JWTAuthMiddleware,  async(req, res, next) => {
                 res.send({users : allUsers})
             }
         }
-        
     } catch (error) {
         console.log(error)
         next(error)
@@ -38,7 +36,11 @@ usersRouter.get("/me", JWTAuthMiddleware,  async(req, res, next) => {
     
     try {
         const user =  await UsersModel.findById(req.user._id)
-        res.send({user})
+       if(user){
+            res.send({user})
+       }else{
+            next(createHttpError(401,{message:"couldn't find the user"}))
+       }
         
     } catch (error) {
         console.log(error)
@@ -54,8 +56,11 @@ usersRouter.put("/me", JWTAuthMiddleware,  async(req, res, next) => {
 
     try {
         const user =  await UsersModel.findByIdAndUpdate(req.user._id, req.body, {new:true})
-        res.send({user})
-        
+        if(user){
+            res.status(204).send({user})
+        }else{
+            next(createHttpError(401,{message:"couldn't find the user"}))
+        }
     } catch (error) {
         console.log(error)
         next(error)
@@ -65,10 +70,13 @@ usersRouter.put("/me", JWTAuthMiddleware,  async(req, res, next) => {
 // ----------------------------- Delete me access key------------------------
 usersRouter.delete("/me", JWTAuthMiddleware,  async(req, res, next) => {
     
-
     try {
         const user =  await UsersModel.findByIdAndDelete(req.user._id)
-        res.status(201).send()
+        if(user){      
+            res.status(201).send()
+        }else {
+            next(createHttpError(401,{message:"couldn't find the user"}))
+        }
         
     } catch (error) {
         console.log(error)
@@ -77,7 +85,7 @@ usersRouter.delete("/me", JWTAuthMiddleware,  async(req, res, next) => {
 })
 
 // ----------------------------- Get new access token from refresh token------------------------
-usersRouter.post("/refreshTokens",  async(req, res, next) => {
+usersRouter.post("/session/refreshTokens",  async(req, res, next) => {
     
     try {
         const {currentRefreshToken} = req.body
@@ -129,8 +137,6 @@ usersRouter.post("/session",  async (req, res, next) => {
 
 // ----------------------------- PUT image me access key------------------------
 usersRouter.post("/me/avatar", JWTAuthMiddleware,   async(req, res, next) => {
-    
-
     try {
         const user =  await UsersModel.findByIdAndUpdate(req.user._id, {avatar:req.file.path}, {new:true})
         res.send({user})
@@ -148,37 +154,13 @@ usersRouter.get("/googleLogin", passport.authenticate("google",{scope : ["email"
 usersRouter.get("/googleRedirect", passport.authenticate("google"), (req, res, next) => {
     try {
         console.log("I am back from google")
-        const token = req.user.token
-        console.log("I have token ---" , token)
-        res.redirect(`${process.env.FE_URL}/home?token=${token}`)
+        const {accessToken, refreshToken} = req.user.token
+        console.log("I have token ---" , refreshToken)
+        res.redirect(`${process.env.FE_URL}/home?token=${refreshToken}`)
     } catch (error) {
         next(error)
     }
 })
-
-
-// -----------------------------GET ROUTE------------------------
-// usersRouter.get("/", async (req, res, next) => {
-//   try {
-//     const Users = await UsersModel.find()
-//     console.log("listof users", Users)
-//     console.log("QUERY PARAMETERS: ", req.query)
-
-//     if (req.query && req.query.username) {
-//       // for serching user by username , ?username=rajib
-//       const filterdUserName = Users.filter((user) => user.username === req.query.username)
-//       res.send(filterdUserName)
-//     } else if (req.query && req.query.email) {
-//       // for searching user by email , ?email=rajib@gmail.com
-//       const filterdUserEmail = Users.filter((user) => user.email === req.query.email)
-//       res.send(filterdUserEmail)
-//     } else {
-//       res.send(Users)
-//     }
-//   } catch (error) {
-//     next(error)
-//   }
-// })
 
 // -----------------------------GET WITH ID ROUTE------------------------
 
@@ -195,24 +177,23 @@ usersRouter.get("/:userId", async (req, res, next) => {
   }
 })
 
-// -----------------------------PUT ROUTE------------------------
 
-usersRouter.put("/", async (req, res, next) => {
-  try {
-  } catch (error) {
-    next(error)
-  }
-})
+// -----------------------------DELETE/Logout ROUTE------------------------
 
-// -----------------------------DELETE ROUTE------------------------
-
-usersRouter.delete("/", async (req, res, next) => {
-  try {
-  } catch (error) {
-    next(error)
-  }
-})
-
+usersRouter.delete("/session", JWTAuthMiddleware, async (req, res, next) => {
+    try {
+        
+        const reqUser = await UsersModel.findByIdAndUpdate(req.user._id, {refreshToken:''}, {new:true})
+        if(reqUser){
+            res.send(reqUser)
+        }else{
+            next(createHttpError(401,"could not logout"))
+        }
+       
+    } catch (error) {
+      next(error)
+    }
+  })
 
 
 

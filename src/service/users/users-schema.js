@@ -3,6 +3,11 @@ import bcrypt from "bcrypt"
 
 const { Schema, model } = mongoose
 
+//interface User {
+// 	name: string
+// 	email: string
+// 	avatar?: string
+// }
 const UsersSchema = new Schema(
   {
     username: { type: String, required: true, unique:[true, "username must be unique" ]},
@@ -33,7 +38,7 @@ UsersSchema.methods.toJSON = function() {
     const userDocument = this
     const userObject = userDocument.toObject()
     delete userObject.password
-    delete userObject.refreshToken
+    // delete userObject.refreshToken
     return userObject
 }
 
