@@ -9,7 +9,7 @@ const chatsRouter = Router()
 chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const recipient = "6241e0e6b11269d4e5b43b0d" //req.body.recipient
+        const recipient = req.body.recipient
         const sender = req.user._id
         if(sender){
             if(!recipient){
