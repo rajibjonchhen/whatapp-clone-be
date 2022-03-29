@@ -1,7 +1,7 @@
 import express, {Router} from 'express'
 import createHttpError from 'http-errors'
 import { JWTAuthMiddleware } from '../auth-middleware/JWTAuthMiddleware.js'
-
+import ChatsModel from './chat-schema.js'
 const chatsRouter = Router()
 
 // ----------------------------- POST message ROUTE------------------------
@@ -9,7 +9,7 @@ const chatsRouter = Router()
 chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const recipient = req.body.recipient
+        const recipient = "6241e0e6b11269d4e5b43b0d" //req.body.recipient
         const sender = req.user._id
         if(sender){
             if(!recipient){
@@ -19,7 +19,7 @@ chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
                 'members':{
                     $all:[ sender, recipient]
                 }
-            }).select("-messages")
+            })
             if(chat){
                 res.send(chat)
             } else{
@@ -34,8 +34,7 @@ chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
         } else{
             next(createHttpError(401, {message:"sender's id is missing"}))
         }
-        const msgSaved = await newMessage.save()
-        res.send({message:msgSaved})
+       
     } catch (error) {
         next(error)
     }
@@ -46,7 +45,7 @@ chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
 chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const reqMsg = await new ChatsModel.find({members: req.user._id})
+        const reqMsg = await ChatsModel.find({members: req.user._id})
         res.send({messages:reqMsg})
     } catch (error) {
         next(error)
@@ -58,7 +57,7 @@ chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
 chatsRouter.get("/:chatId", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const reqMsg = await new ChatsModel.findOne({messages: [{_id:req.params.chatId, member: req.user._id}]})
+        const reqMsg = await ChatsModel.findOne({_id:req.params.chatId, "members": req.user._id})
 
         if(reqMsg){
             res.send({messages:reqMsg})
