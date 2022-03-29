@@ -1,35 +1,35 @@
 import createHttpError from "http-errors"
 import createError from "http-errors"
 import jwt from 'jsonwebtoken'
-import { IUser } from "../types/types.js"
 import UsersModel from "../users/users-schema.js"
 
 interface ITokenId {
-    _id:string
+    _id:string,
+    
 }
 export const authenticateUser = async (user:IUser) => {
-    const accessToken = await generateJWTToken({_id:user._id})
+    const accessToken = await generateJWTToken({ _id:user._id! })
     const refreshToken = await generateRefreshToken({_id: user._id})
     await UsersModel.findByIdAndUpdate(user._id,{refreshToken:refreshToken})
     return {accessToken, refreshToken}
 }
 
-export const generateJWTToken = (payload:any) => 
-    new Promise ((resolve, reject) => 
+export const generateJWTToken = (payload:ITokenId) => 
+    new Promise<string>((resolve, reject) => 
         jwt.sign(payload, process.env.JWT_SECRET!, {expiresIn : "15m"}, (err, token) => {
             if(err) reject(err)
-            else resolve(token)
+            else resolve(token!)
         })
     )
 
-export const verifyJWTToken = (token:any) =>
-    new Promise ((resolve, reject) =>
+export const verifyJWTToken = (token: string) =>
+    new Promise<ITokenId>((resolve, reject) =>
         jwt.verify(
             token,
             process.env.JWT_SECRET!,
             (err:any, payload:any) => {
                 if(err) reject (err)
-                else resolve(payload)
+                else resolve(payload as ITokenId)
             }
         )
     )    

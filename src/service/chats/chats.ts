@@ -2,6 +2,8 @@ import express, {Router} from 'express'
 import createHttpError from 'http-errors'
 import { JWTAuthMiddleware } from '../auth-middleware/JWTAuthMiddleware.js'
 import ChatsModel from './chat-schema.js'
+import { Request, Response, NextFunction } from "express";
+
 const chatsRouter = Router()
 
 // ----------------------------- POST message ROUTE------------------------
@@ -10,7 +12,7 @@ chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
         const recipient = req.body.recipient
-        const sender = req.user._id
+        const sender = req.user?._id
         if(sender){
             if(!recipient){
                 next(createHttpError(400, "Recipient id is missing"))
@@ -45,7 +47,7 @@ chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
 chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const reqMsg = await ChatsModel.find({members: req.user._id})
+        const reqMsg = await ChatsModel.find({members: req.user?._id})
         res.send({messages:reqMsg})
     } catch (error) {
         next(error)
@@ -57,7 +59,7 @@ chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
 chatsRouter.get("/:chatId", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const reqMsg = await ChatsModel.findOne({_id:req.params.chatId, "members": req.user._id})
+        const reqMsg = await ChatsModel.findOne({_id:req.params.chatId, "members": req.user?._id})
 
         if(reqMsg){
             res.send({messages:reqMsg})

@@ -1,6 +1,6 @@
 
 import { checkSchema, validationResult } from "express-validator";
-import { Request, Response, NextFunction } from "express";
+import { RequestHandler } from "express";
 import createHttpError from "http-errors";
 
 interface ValidatorInterface {
@@ -35,7 +35,7 @@ const schema : any = {
 
 export const checkUserSchema = checkSchema(schema)
 
-export const checkValidationResult = (req:Request, res:Response, next:NextFunction) => {
+export const checkValidationResult: RequestHandler = (req, res,next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       // const error = new Error("User validation is failed");

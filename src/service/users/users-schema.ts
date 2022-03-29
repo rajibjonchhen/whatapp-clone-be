@@ -1,6 +1,6 @@
 import mongoose, { Model }  from "mongoose"
 import bcrypt from "bcrypt"
-import { IUser } from "../types/types"
+import { NextFunction } from "express";
 
 const { Schema, model } = mongoose
 export interface IUserDocument extends IUser, Document {}
@@ -9,7 +9,7 @@ export interface IUserModel extends Model<IUser> {
   checkCredentials: (email: string, plainPw: string) => Promise<IUser | null>;
 }
 
-const UsersSchema = new Schema(
+const UsersSchema = new Schema<IUserDocument, IUserModel>(
   {
     username: { type: String, required: true, unique:true},
     email: { type: String, required: true, unique:true},
@@ -23,7 +23,7 @@ const UsersSchema = new Schema(
   }
 )
 
-UsersSchema.pre("save", async function (next) {
+UsersSchema.pre('save', async function<IUserModel>(this: any, next:any) {
    
     const newUser = this 
     const plainPw = newUser.password
@@ -47,11 +47,14 @@ UsersSchema.statics.checkCredentials = async function(email, plainPW) {
 
     const user = await this.findOne({email})
     if(user) {
-        const isMatch  = await bcrypt.compare(plainPW, user.password)
+        const isMatch  = await bcrypt.compare(plainPW, user.password!)
         
         const result = isMatch? user : null
 
         return result
     }else return null
 }
-export default model("User", UsersSchema)
+
+
+const UserModel = model<IUserDocument, IUserModel>("User", UsersSchema)
+export default UserModel

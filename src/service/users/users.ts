@@ -1,36 +1,36 @@
-import express, { Router } from "express"
+import express, { RequestHandler, Router } from "express"
 import { validationResult } from "express-validator"
 import createHttpError from "http-errors"
 import passport from "passport"
 import multer from "multer"
 import { v2 as cloudinary } from "cloudinary"
-import { CloudinaryStorage } from "multer-storage-cloudinary"
+import { CloudinaryStorage, Options } from "multer-storage-cloudinary"
 import { JWTAuthMiddleware } from "../auth-middleware/JWTAuthMiddleware.js"
 import { authenticateUser, verifyRefreshTokenAndGenerateNewTokens } from "../auth-middleware/tools.js"
 import { checkUserSchema, checkValidationResult } from "../errors/validator.js"
 import UsersModel from "./users-schema.js"
 import { Request, Response, NextFunction } from "express";
-import { ILogin, IUser } from "../types/types.js";
+
 export interface IRequestWithUser extends Request {
     user: ILogin
   }
 
 const usersRouter = Router()
 
-/*const cloudinaryAvatarUploader = multer({
+const cloudinaryAvatarUploader = multer({
   storage: new CloudinaryStorage({
     cloudinary,
     params: {
       folder: "WhatsApp-Clone",
     },
-  }),
-}).single("avatar")*/
+  } as Options),
+}).single("avatar")
 
 // -----------------------------Get me access key------------------------
-usersRouter.get("/", JWTAuthMiddleware, async (req:Request, res:Response, next:NextFunction) => {
+usersRouter.get("/", JWTAuthMiddleware, async (req, res, next) => {
   console.log(req.user)
   try {
-    const user = await UsersModel.findById(req.user._id)
+    const user = await UsersModel.findById(req.user?._id)
     if (user) {
       if (req.query.q) {
         console.log(req.query.q)
@@ -50,7 +50,7 @@ usersRouter.get("/", JWTAuthMiddleware, async (req:Request, res:Response, next:N
 // ----------------------------- Get me access key------------------------
 usersRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const user = await UsersModel.findById(req.user._id)
+    const user = await UsersModel.findById(req.user?._id)
     if (user) {
       res.send({ user })
     } else {
@@ -65,7 +65,7 @@ usersRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
 // ----------------------------- PUT me access key------------------------
 usersRouter.put("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const user = await UsersModel.findByIdAndUpdate(req.user._id, req.body, { new: true })
+    const user = await UsersModel.findByIdAndUpdate(req.user?._id, req.body, { new: true })
     if (user) {
       res.status(204).send({ user })
     } else {
@@ -80,7 +80,7 @@ usersRouter.put("/me", JWTAuthMiddleware, async (req, res, next) => {
 // ----------------------------- Delete me access key------------------------
 usersRouter.delete("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const user = await UsersModel.findByIdAndDelete(req.user._id)
+    const user = await UsersModel.findByIdAndDelete(req.user?._id)
     if (user) {
       res.status(201).send()
     } else {
@@ -109,7 +109,7 @@ usersRouter.post("/session/refreshTokens", async (req, res, next) => {
 // ----------------------------- POST ROUTE------------------------
 
 // ==> for user registration
-usersRouter.post("/account", checkUserSchema, checkValidationResult, async (req, res, next) => {
+usersRouter.post("/account", checkUserSchema, checkValidationResult, (async (req, res, next) => {
   try {
     const errorsList = validationResult(req)
     console.log("errorsList ---=", { errorsList })
@@ -125,7 +125,7 @@ usersRouter.post("/account", checkUserSchema, checkValidationResult, async (req,
   } catch (error) {
     next(error)
   }
-})
+}) as RequestHandler)
 // ==> for user login
 usersRouter.post("/session", async (req, res, next) => {
   try {
@@ -143,7 +143,7 @@ usersRouter.post("/session", async (req, res, next) => {
 // ----------------------------- PUT image me access key------------------------
 usersRouter.post("/me/avatar", JWTAuthMiddleware, cloudinaryAvatarUploader, async (req, res, next) => {
   try {
-    const user = await UsersModel.findByIdAndUpdate(req.user._id, { avatar: req.file.path }, { new: true })
+    const user = await UsersModel.findByIdAndUpdate(req.user?._id, { avatar: req.file?.path }, { new: true })
     res.send({ user })
   } catch (error) {
     console.log(error)
@@ -158,7 +158,7 @@ usersRouter.get("/googleLogin", passport.authenticate("google", { scope: ["email
 usersRouter.get("/googleRedirect", passport.authenticate("google"), (req, res, next) => {
   try {
     console.log("I am back from google")
-    const { accessToken, refreshToken } = req.user.token
+    const { accessToken, refreshToken } = req.user?.token!
     console.log("I have token ---", refreshToken)
     res.redirect(`${process.env.FE_URL}/home?token=${refreshToken}`)
   } catch (error) {
@@ -185,7 +185,7 @@ usersRouter.get("/:userId", async (req, res, next) => {
 
 usersRouter.delete("/session", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const reqUser = await UsersModel.findByIdAndUpdate(req.user._id, { refreshToken: "" }, { new: true })
+    const reqUser = await UsersModel.findByIdAndUpdate(req.user?._id, { refreshToken: "" }, { new: true })
     if (reqUser) {
       res.send(reqUser)
     } else {

@@ -1,4 +1,4 @@
-export interface IUser extends Doucment {
+interface IUser extends Doucment {
     _id?:string,
 	username: string
 	email: string
@@ -7,7 +7,7 @@ export interface IUser extends Doucment {
    refreshToken?: string
 }
 
-export interface ILogin{
+interface ILogin{
     _id:string,
     username:string
 };
