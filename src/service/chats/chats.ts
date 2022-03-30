@@ -48,6 +48,9 @@ chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
         const reqMsg = await ChatsModel.find({members: req.user?._id})
+
+        // have this user socket listen to ALL of this chat rooms........
+        
         res.send({messages:reqMsg})
     } catch (error) {
         next(error)
