@@ -9,7 +9,10 @@ import passport from "passport"
 import googleStrategy from "./service/auth-middleware/Oauth.js"
 import { Server } from 'socket.io'
 import {createServer} from "http"
-
+import { verifyJWTToken } from "./service/auth-middleware/tools.js"
+import UsersModel from "./service/users/users-schema.js"
+import { v4 as uuid } from "uuid"
+import createHttpError from "http-errors"
 const { PORT = 3001 } = process.env
 
 const server = express()
@@ -72,58 +75,65 @@ mongoose.connection.on("connected", () => {
 let onlineUsers = []
 
 io.on("connect", socket => {
-    console.log("Connected",socket.id)
+    
+    const token = socket.handshake.auth.token
+    const payload = verifyJWTToken(token)
 
-    socket.on("loggedIn", ({email, password}) => {
-        console.log("email -" , email,"password -" , password)
-        io.use(function(socket, next) {
-          let handshake = socket.request;
-          next();
-        });
-        console.log(socket.handshake.auth) 
-        // user = {...user, id: uuid(), createdAt: new Date()}
-        // onlineUsers =
-        // onlineUsers.filter(user => user.username !== username)
-        // .concat({
-        //     username,
-        //     id: socket.id,
-        //     sendAt : new Date(),
-        //     room
+    if(!payload){
+      socket.emit("JWT_ERROR")
+      throw createHttpError(401, 'JWT_ERROR please relogin')
+    }
+
+    console.log(payload)
+
+    socket.on("outgoing-msg", ({message, chatId}) => {
+    //  send to people in the room (chatId) the message
+     socket.to(chatId).emit("incoming-msg",message)
+    })
+    
+    // socket.join(room)
+    socket.on("loggedin",(socket) =>{
+
+          console.log("Connected")
+          console.log("Connected",socket.id)
+          console.log("socket.handshake.auth.token", socket.handshake.auth.token);
+
+          const onlineUser = {user:payload._id, _id: uuid(), createdAt: new Date()}
+          onlineUsers =
+          onlineUsers.filter(i => i.username !== payload._id)
+          .concat(onlineUser)
+
+        })
+
+       
+    
+        socket.broadcast.emit("newConnection")
+        
+
+
+        
+      
+        
+        // socket.on("sendmessage", ({message, room}) => {
+        //   console.log("message - " + message)
+        //   socket.to(room).emit("message",message)
+        //   // socket.broadcast.emit("message",message)
         // })
-
-        // console.log("socket.id", socket.id , "room", room)
-        // socket.join(room)
-
-        socket.emit("loggedin")
-    
-        socket.broadcast.emit("newConnection")
-    })
-
-
-    
-    
-    socket.on("sendmessage", ({message, room}) => {
-        console.log("message - " + message)
-       socket.to(room).emit("message",message)
-        // socket.broadcast.emit("message",message)
-
-
-    })
-    
-    socket.on("openChatWith", ({ recipientId, sender }) => {
-        console.log("here")
-        socket.join(recipientId)
-        socket.to(recipientId).emit("message", { sender, text: "Hello, I'd like to chat with you" })
-    })
-    
-    socket.on("disconnect", () => {
-        console.log("Disconnected socket with id " + socket.id)
-    
-        onlineUsers = onlineUsers.filter(user => user.id !== socket.id)
-    
-        socket.broadcast.emit("newConnection")
-    })
-})
+        
+        // socket.on("openChatWith", ({ recipientId, sender }) => {
+        //   console.log("here")
+        //   socket.join(recipientId)
+        //   socket.to(recipientId).emit("message", { sender, text: "Hello, I'd like to chat with you" })
+        // })
+        
+        socket.on("disconnect", () => {
+          console.log("Disconnected socket with id " + socket.id)
+          
+          onlineUsers = onlineUsers.filter(user => user.id !== socket.id)
+          
+          socket.broadcast.emit("newConnection")
+        })
+      })
 
 //----------========== socketio end ==========-----------
 
