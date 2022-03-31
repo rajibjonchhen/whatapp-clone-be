@@ -22,17 +22,6 @@ const httpServer = createServer(server)
 
 const io = new Server(httpServer, {allowEIO3 : true})
 
-// io.on("connection", socket => {
-//   console.log(socket.handshake.auth) 
-  // verify this token and decode it to retrieve the ID of the user and save it in a onlineUsers array
-
-  //onlineUsers.push({ userId: decodedToken._id, socket: socket })
-
-  // const user = onlineUsers.find(user with userId)
-  // user.socket.join(any necessary room to be joined.........)
-
-
-// })
 /********************** Middleware  ************************/
 passport.use("google", googleStrategy)
 
@@ -72,70 +61,63 @@ mongoose.connection.on("connected", () => {
 
 
 //----------========= socketio start =========-----------
+
+
+// io.on("connection", socket => {
+//   console.log("socket.handshake.auth") 
+  // verify this token and decode it to retrieve the ID of the user and save it in a onlineUsers array
+
+  //onlineUsers.push({ userId: decodedToken._id, socket: socket })
+
+  // const user = onlineUsers.find(user with userId)
+  // user.socket.join(any necessary room to be joined.........)
+
+
+// })
 let onlineUsers = []
 
 io.on("connect", socket => {
     
+  console.log(socket.handshake.auth)
     const token = socket.handshake.auth.token
-
-    const payload = verifyJWTToken(token)
-    // onlinseUsers will need to save the users' sockets
-    if(!payload){
+    console.log("token == ", token)
+    if(!token){
       socket.emit("JWT_ERROR")
       throw createHttpError(401, 'JWT_ERROR please relogin')
     }
 
-    const onlineUser = {user:payload._id, _id: uuid(), createdAt: new Date(), socket: socket}
-    onlineUsers =
-    onlineUsers.filter(i => i.username !== payload._id)
-    .concat(onlineUser)
+    const payload = verifyJWTToken(token)
+    // onlinseUsers will need to save the users' sockets
+    socket.broadcast.emit("newConnection")
+
+    const onlineUser = {userId:payload._id, id:socket.Id , createdAt: new Date(), socket: socket}
+
+    onlineUsers = onlineUsers.filter(online => online.userId !== payload._id).concat(onlineUser)
 
     // later in the GET request
-    // onlineUser.find(......).socket.join(chats)
+    //  const userToChat = onlineUser.find(user => user.userId ===payload._id)
+    //  socket.join(socket.id)
 
+    socket.on("outgoing-msg", async({chatId,message}) => {
+     
+    try {
+      const newMsg = {sender: message.sender, content: message.content}
+      const chat = await ChatsModel.findByIdAndUpdate(chatId, { $push: {messages: newMsg}})
 
-    console.log(payload)
+      chat.toObject().members.forEach(member => {
+        const recipient = onlineUsers.find(user => user.userId === member)
+        if(recipient){
+          socket.to(recipient.socket.id).emit("incoming-msg",message)
+        }
+      });
+      // go and grab from the onlineUsers all the chat participants except you
+      //socket.join(recipient.socket.Id)
 
-    socket.on("outgoing-msg", (newMessage) => {
-    //  send to people in the room (chatId) the message
-
-    // save the message to the db
-
-    // awaitChat(chatId, { $push: {messages: mesage}})
-      socket.to(chatId).emit("incoming-msg",message)
+      //socket.to(chatId).emit("incoming-msg",message)
+    } catch (error) {
+      next(createHttpError(401, "Error could not update database"))
+    }
     })
-    
-    // socket.join(room)
-    socket.on("loggedin",(socket) =>{
-
-          console.log("Connected")
-          console.log("Connected",socket.id)
-          console.log("socket.handshake.auth.token", socket.handshake.auth.token);
-
-          
-
-        })
-
-       
-    
-        socket.broadcast.emit("newConnection")
-        
-
-
-        
-      
-        
-        // socket.on("sendmessage", ({message, room}) => {
-        //   console.log("message - " + message)
-        //   socket.to(room).emit("message",message)
-        //   // socket.broadcast.emit("message",message)
-        // })
-        
-        // socket.on("openChatWith", ({ recipientId, sender }) => {
-        //   console.log("here")
-        //   socket.join(recipientId)
-        //   socket.to(recipientId).emit("message", { sender, text: "Hello, I'd like to chat with you" })
-        // })
         
         socket.on("disconnect", () => {
           console.log("Disconnected socket with id " + socket.id)
@@ -145,6 +127,8 @@ io.on("connect", socket => {
           socket.broadcast.emit("newConnection")
         })
       })
+
+      server.use("/online-users", (res, req) => res.send({onlineUsers}))
 
 //----------========== socketio end ==========-----------
 

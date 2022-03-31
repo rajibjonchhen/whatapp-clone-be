@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 import UsersModel from "../users/users-schema.js"
 
 export const authenticateUser = async user => {
-    const accessToken = await generateJWTToken({_id:user._id})
+    const accessToken = await generateJWTToken({_id:user._id, username : user.username})
     const refreshToken = await generateRefreshToken({_id: user._id})
     user.refreshToken = refreshToken
     await user.save()

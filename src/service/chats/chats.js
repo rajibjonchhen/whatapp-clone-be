@@ -14,12 +14,14 @@ chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
         if(sender){
             if(!recipient){
                 next(createHttpError(400, "Recipient id is missing"))
-            } 
-            let chat = await ChatsModel.findOne({
-                'members':{
-                    $all:[ sender, recipient]
-                }
-            })
+            } else{
+                let chat = await ChatsModel.findOne({
+                    'members':{
+                        $all:[ sender, recipient]
+                    }
+                })
+
+            }
             if(chat){
                 res.send(chat)
             } else{
@@ -46,6 +48,10 @@ chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
         const reqMsg = await ChatsModel.find({members: req.user._id})
+        // we also need to make sure that the req.user socket is .join ing the Chats in which he is a participant
+        // socket.join(recipient.socket.Id)
+
+        reqMsg.socket.join(req.user._id)
         res.send({messages:reqMsg})
     } catch (error) {
         next(error)
