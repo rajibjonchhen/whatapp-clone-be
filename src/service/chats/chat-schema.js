@@ -4,7 +4,7 @@ const {Schema, model } = mongoose
 
 const ChatMessageSchema = new Schema(
     {
-        sender: { type: String, required: true },
+        sender: { type: Schema.Types.ObjectId,  ref: "User" },
         content: {
             text: { type: String },
             media: { type: String },
@@ -16,8 +16,17 @@ const ChatMessageSchema = new Schema(
 )
 
 const ChatsSchema = new Schema({
-    members : [{ type: Schema.Types.ObjectId, ref: "User", required: true}],
-    messages:[{type : ChatMessageSchema}],
-
-})
+    members : [{ type: Schema.Types.ObjectId, ref: "User"}],
+    messages:[ {
+        sender: { type: Schema.Types.ObjectId,  ref: "User" },
+        content: {
+            text: { type: String },
+            media: { type: String },
+        }
+    }],
+},
+{
+    timestamps: true,
+}
+)
 export default model("Chats", ChatsSchema)

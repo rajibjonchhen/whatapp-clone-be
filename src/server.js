@@ -11,6 +11,7 @@ import { Server } from 'socket.io'
 import {createServer} from "http"
 import { verifyJWTToken } from "./service/auth-middleware/tools.js"
 import UsersModel from "./service/users/users-schema.js"
+import ChatsModel from "./service/chats/chat-schema.js"
 import { v4 as uuid } from "uuid"
 import createHttpError from "http-errors"
 const { PORT = 3001 } = process.env
@@ -93,16 +94,17 @@ io.on("connect", socket => {
     const onlineUser = {userId:payload._id, id:socket.Id , createdAt: new Date(), socket: socket}
 
     onlineUsers = onlineUsers.filter(online => online.userId !== payload._id).concat(onlineUser)
-
     // later in the GET request
     //  const userToChat = onlineUser.find(user => user.userId ===payload._id)
     //  socket.join(socket.id)
-
+  
     socket.on("outgoing-msg", async({chatId,message}) => {
-     
-    try {
-      const newMsg = {sender: message.sender, content: message.content}
-      const chat = await ChatsModel.findByIdAndUpdate(chatId, { $push: {messages: newMsg}})
+     try {
+        const newMsg = {sender: message.sender, content: {text:message.content}}
+        console.log("outgoing-msg",chatId, "message", message)
+        const reqChat = await ChatsModel.findById(chatId)
+        console.log("reqChat", reqChat)
+        const chat = await ChatsModel.findByIdAndUpdate(chatId, { $push: {messages:newMsg}})
 
       chat.toObject().members.forEach(member => {
         const recipient = onlineUsers.find(user => user.userId === member)
@@ -115,7 +117,7 @@ io.on("connect", socket => {
 
       //socket.to(chatId).emit("incoming-msg",message)
     } catch (error) {
-      next(createHttpError(401, "Error could not update database"))
+      throw createHttpError(401, "Error could not update database")
     }
     })
         
@@ -127,8 +129,9 @@ io.on("connect", socket => {
           socket.broadcast.emit("newConnection")
         })
       })
+      server.use("/online-users", (res, req) => req.send({onlineUsers}))
 
-      server.use("/online-users", (res, req) => res.send({onlineUsers}))
+
 
 //----------========== socketio end ==========-----------
 
