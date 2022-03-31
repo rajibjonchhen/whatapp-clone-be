@@ -21,16 +21,16 @@ chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
                     }
                 })
 
-            }
-            if(chat){
-                res.send(chat)
-            } else{
-                const newChat = new ChatsModel({members : [sender, recipient]})
-                const savedChat = await newChat.save()
-                if(savedChat){
-                    res.status(201).send(newChat)
-                }else{
-                    res.status(400).send({message: "Something went wrong"})
+                if(chat){
+                    res.send(chat)
+                } else{
+                    const newChat = new ChatsModel({members : [sender, recipient]})
+                    const savedChat = await newChat.save()
+                    if(savedChat){
+                        res.status(201).send(newChat)
+                    }else{
+                        res.status(400).send({message: "Something went wrong"})
+                    }
                 }
             }
         } else{
@@ -47,11 +47,11 @@ chatsRouter.post("/", JWTAuthMiddleware, async(req, res, next) =>{
 chatsRouter.get("/", JWTAuthMiddleware, async(req, res, next) =>{
 
     try {
-        const reqMsg = await ChatsModel.find({members: req.user._id})
+        const reqMsg = await ChatsModel.find({members: req.user._id}).populate({path:"members", select:"username _id updateAT avatar"})
         // we also need to make sure that the req.user socket is .join ing the Chats in which he is a participant
         // socket.join(recipient.socket.Id)
 
-        reqMsg.socket.join(req.user._id)
+        //reqMsg.socket.join(req.user._id)
         res.send({messages:reqMsg})
     } catch (error) {
         next(error)
@@ -66,7 +66,7 @@ chatsRouter.get("/:chatId", JWTAuthMiddleware, async(req, res, next) =>{
         const reqMsg = await ChatsModel.findOne({_id:req.params.chatId, "members": req.user._id})
 
         if(reqMsg){
-            res.send({messages:reqMsg})
+            res.send({chat:reqMsg})
         } else{
             next(createHttpError(404,{message:`chat with ${req.params.chatId} not found`}))
         }
