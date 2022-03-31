@@ -77,18 +77,32 @@ let onlineUsers = []
 io.on("connect", socket => {
     
     const token = socket.handshake.auth.token
-    const payload = verifyJWTToken(token)
 
+    const payload = verifyJWTToken(token)
+    // onlinseUsers will need to save the users' sockets
     if(!payload){
       socket.emit("JWT_ERROR")
       throw createHttpError(401, 'JWT_ERROR please relogin')
     }
 
+    const onlineUser = {user:payload._id, _id: uuid(), createdAt: new Date(), socket: socket}
+    onlineUsers =
+    onlineUsers.filter(i => i.username !== payload._id)
+    .concat(onlineUser)
+
+    // later in the GET request
+    // onlineUser.find(......).socket.join(chats)
+
+
     console.log(payload)
 
-    socket.on("outgoing-msg", ({message, chatId}) => {
+    socket.on("outgoing-msg", (newMessage) => {
     //  send to people in the room (chatId) the message
-     socket.to(chatId).emit("incoming-msg",message)
+
+    // save the message to the db
+
+    // awaitChat(chatId, { $push: {messages: mesage}})
+      socket.to(chatId).emit("incoming-msg",message)
     })
     
     // socket.join(room)
@@ -98,10 +112,7 @@ io.on("connect", socket => {
           console.log("Connected",socket.id)
           console.log("socket.handshake.auth.token", socket.handshake.auth.token);
 
-          const onlineUser = {user:payload._id, _id: uuid(), createdAt: new Date()}
-          onlineUsers =
-          onlineUsers.filter(i => i.username !== payload._id)
-          .concat(onlineUser)
+          
 
         })
 
