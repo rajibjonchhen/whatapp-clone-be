@@ -11,6 +11,7 @@ import { Server } from 'socket.io'
 import {createServer} from "http"
 import { verifyJWTToken } from "./service/auth-middleware/tools.js"
 import UsersModel from "./service/users/users-schema.js"
+import ChatsModel from "./service/chats/chat-schema.js"
 import { v4 as uuid } from "uuid"
 import createHttpError from "http-errors"
 const { PORT = 3001 } = process.env
@@ -76,46 +77,52 @@ mongoose.connection.on("connected", () => {
 // })
 let onlineUsers = []
 
-io.on("connect", socket => {
+io.on("connect", async(socket) => {
     
-  console.log(socket.handshake.auth)
+  // console.log(socket.handshake.auth)
     const token = socket.handshake.auth.token
-    console.log("token == ", token)
+    // console.log("token == ", token)
     if(!token){
       socket.emit("JWT_ERROR")
       throw createHttpError(401, 'JWT_ERROR please relogin')
     }
 
-    const payload = verifyJWTToken(token)
+    const {_id, username} = await verifyJWTToken(token)
     // onlinseUsers will need to save the users' sockets
     socket.broadcast.emit("newConnection")
 
-    const onlineUser = {userId:payload._id, id:socket.Id , createdAt: new Date(), socket: socket}
-
-    onlineUsers = onlineUsers.filter(online => online.userId !== payload._id).concat(onlineUser)
-
+    const onlineUser = {userId:_id, id:socket.id , createdAt: new Date(), socket: socket}
+    onlineUsers = onlineUsers.filter(online => online.userId !== _id).concat(onlineUser)
     // later in the GET request
-    //  const userToChat = onlineUser.find(user => user.userId ===payload._id)
+    //  const userToChat = onlineUser.find(user => user.userId ===_id)
     //  socket.join(socket.id)
-
+    // console.log("onlineUser", onlineUsers, _id)
     socket.on("outgoing-msg", async({chatId,message}) => {
+      try {
+       console.log("paylaod._id ====" ,  _id)
+        const newMsg = {sender: message.sender, content: {text:message.content}}
      
-    try {
-      const newMsg = {sender: message.sender, content: message.content}
-      const chat = await ChatsModel.findByIdAndUpdate(chatId, { $push: {messages: newMsg}})
-
-      chat.toObject().members.forEach(member => {
-        const recipient = onlineUsers.find(user => user.userId === member)
-        if(recipient){
-          socket.to(recipient.socket.id).emit("incoming-msg",message)
-        }
+        const chat = await ChatsModel.findByIdAndUpdate(chatId, { $push: {messages:newMsg}})
+          // console.log(chat)
+      chat.members.forEach(member => {
+        // console.log("member", member)
+        const recipient = onlineUsers.find(user => user.userId === member.toString())
+        // console.log("ONLINE USERS", onlineUser,"message content", message.content)
+        
+          // console.log("ONLINE USERS recipient", onlineUser,"message content recipient", message.content)
+          if(recipient){
+            socket.to(recipient.id).emit("incoming-msg",message)
+            console.log("I am going to send msg sending to socket :-)")   
+          } else{
+            console.log("I am not going to send msg")   
+          }
+        
       });
       // go and grab from the onlineUsers all the chat participants except you
       //socket.join(recipient.socket.Id)
-
       //socket.to(chatId).emit("incoming-msg",message)
     } catch (error) {
-      next(createHttpError(401, "Error could not update database"))
+      throw createHttpError(401, "Error could not update database")
     }
     })
         
@@ -127,8 +134,9 @@ io.on("connect", socket => {
           socket.broadcast.emit("newConnection")
         })
       })
+      server.use("/online-users", (res, req) => req.send({onlineUsers}))
 
-      server.use("/online-users", (res, req) => res.send({onlineUsers}))
+
 
 //----------========== socketio end ==========-----------
 
