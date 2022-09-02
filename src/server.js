@@ -75,66 +75,66 @@ mongoose.connection.on("connected", () => {
 
 
 // })
-let onlineUsers = []
+// let onlineUsers = []
 
-io.on("connect", async(socket) => {
+// io.on("connect", async(socket) => {
     
-  // console.log(socket.handshake.auth)
-    const token = socket.handshake.auth.token
-    // console.log("token == ", token)
-    if(!token){
-      socket.emit("JWT_ERROR")
-      throw createHttpError(401, 'JWT_ERROR please relogin')
-    }
+//   console.log(socket.handshake)
+//     const token = socket.handshake.auth.token
+//     // console.log("token == ", token)
+//     if(!token){
+//       socket.emit("JWT_ERROR")
+//       throw createHttpError(401, 'JWT_ERROR please relogin')
+//     }
 
-    const {_id, username} = await verifyJWTToken(token)
-    // onlinseUsers will need to save the users' sockets
-    socket.broadcast.emit("newConnection")
+//     const {_id, username} = await verifyJWTToken(token)
+//     // onlinseUsers will need to save the users' sockets
+//     socket.broadcast.emit("newConnection")
 
-    const onlineUser = {userId:_id, id:socket.id , createdAt: new Date(), socket: socket}
-    onlineUsers = onlineUsers.filter(online => online.userId !== _id).concat(onlineUser)
-    // later in the GET request
-    //  const userToChat = onlineUser.find(user => user.userId ===_id)
-    //  socket.join(socket.id)
-    // console.log("onlineUser", onlineUsers, _id)
-    socket.on("outgoing-msg", async({chatId,message}) => {
-      try {
-       console.log("paylaod._id ====" ,  _id)
-        const newMsg = {sender: message.sender, content: {text:message.content}}
+//     const onlineUser = {userId:_id, id:socket.id , createdAt: new Date(), socket: socket}
+//     onlineUsers = onlineUsers.filter(online => online.userId !== _id).concat(onlineUser)
+//     // later in the GET request
+//     //  const userToChat = onlineUser.find(user => user.userId ===_id)
+//     //  socket.join(socket.id)
+//     // console.log("onlineUser", onlineUsers, _id)
+//     socket.on("outgoing-msg", async({chatId,message}) => {
+//       try {
+//        console.log("paylaod._id ====" ,  _id)
+//         const newMsg = {sender: message.sender, content: {text:message.content}}
      
-        const chat = await ChatsModel.findByIdAndUpdate(chatId, { $push: {messages:newMsg}})
-          // console.log(chat)
-      chat.members.forEach(member => {
-        // console.log("member", member)
-        const recipient = onlineUsers.find(user => user.userId === member.toString())
-        // console.log("ONLINE USERS", onlineUser,"message content", message.content)
+//         const chat = await ChatsModel.findByIdAndUpdate(chatId, { $push: {messages:newMsg}})
+//           // console.log(chat)
+//       chat.members.forEach(member => {
+//         // console.log("member", member)
+//         const recipient = onlineUsers.find(user => user.userId === member.toString())
+//         // console.log("ONLINE USERS", onlineUser,"message content", message.content)
         
-          // console.log("ONLINE USERS recipient", onlineUser,"message content recipient", message.content)
-          if(recipient){
-            socket.to(recipient.id).emit("incoming-msg",message)
-            console.log("I am going to send msg sending to socket :-)")   
-          } else{
-            console.log("I am not going to send msg")   
-          }
+//           // console.log("ONLINE USERS recipient", onlineUser,"message content recipient", message.content)
+//           if(recipient){
+//             socket.to(recipient.id).emit("incoming-msg",message)
+//             console.log("I am going to send msg sending to socket :-)")   
+//           } else{
+//             console.log("I am not going to send msg")   
+//           }
         
-      });
-      // go and grab from the onlineUsers all the chat participants except you
-      //socket.join(recipient.socket.Id)
-      //socket.to(chatId).emit("incoming-msg",message)
-    } catch (error) {
-      throw createHttpError(401, "Error could not update database")
-    }
-    })
+//       });
+//       // go and grab from the onlineUsers all the chat participants except you
+//       //socket.join(recipient.socket.Id)
+//       //socket.to(chatId).emit("incoming-msg",message)
+//     } catch (error) {
+//       throw createHttpError(401, "Error could not update database")
+//     }
+//     })
         
-        socket.on("disconnect", () => {
-          console.log("Disconnected socket with id " + socket.id)
+//         socket.on("disconnect", () => {
+//           console.log("Disconnected socket with id " + socket.id)
           
-          onlineUsers = onlineUsers.filter(user => user.id !== socket.id)
+//           onlineUsers = onlineUsers.filter(user => user.id !== socket.id)
           
-          socket.broadcast.emit("newConnection")
-        })
-      })
-      server.use("/online-users", (res, req) => req.send({onlineUsers}))
+//           socket.broadcast.emit("newConnection")
+//         })
+//       })
+//       server.use("/online-users", (res, req) => req.send({onlineUsers}))
 
 
 
